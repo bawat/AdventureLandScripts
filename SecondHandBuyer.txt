@@ -1,0 +1,78 @@
+var secondhand_socket = get_socket();
+var items = character.items;
+var itemBin = []
+itemBin.addItem = function(item){
+	var itemIndex = -1;
+	for(var i = 0; i < itemBin.length; i++){
+		if(itemBin[i].name == item.name){
+			itemBin[i].found++;
+		}else{
+			itemBin.push({name: item.name, found: 1});
+		}
+	}
+}
+for(var i = 0; i < items.length; i++){
+	itemBin.addItem(items[i]);
+}
+
+show_json(itemBin);
+return;
+
+compound(item0, item1, item2, scroll_num, offering_numopt)
+
+function getSecondHandItems() {
+    return new Promise(function(resolve, reject) {
+        setTimeout(reject, 300);
+        secondhand_socket.once('secondhands', resolve);
+
+        secondhand_socket.emit('secondhands');
+    });
+}
+
+async function buySecondHandItems(ids, filter = (id, level) => true) {
+	function buySecondHandItem(rid) {
+		secondhand_socket.emit('sbuy', {rid})
+	}
+	
+    if (typeof ids === 'string') {
+        ids = [ids];
+    }
+
+    if (Array.isArray(ids) &&
+        ids.every(id => typeof id === 'string')
+    ) {
+        const items = await getSecondHandItems();
+        const targetItems = items
+            .filter(item => ids.includes(item.name))
+            .filter(({name, level}) => filter(name, level))
+            .map(({rid}) => buySecondHandItem(rid));
+    } else {
+        throw new TypeError('Cant process "ids"');
+    }
+}
+buySecondHandItems(['intamulet', 'intring', 'firestaff', 'intearring', 'intbelt']);
+
+var currentRegion = parent.server_region;
+var currentIdentifier = parent.server_identifier;
+var serverList = [
+	{id: 0, region: 'EU', identifier: 'I'},
+	{id: 1, region: 'EU', identifier: 'II'},
+  	{id: 2, region: 'EU', identifier: 'PVP'},
+	{id: 3, region: 'US', identifier: 'I'},
+	{id: 4, region: 'US', identifier: 'II'},
+	{id: 5, region: 'US', identifier: 'III'},
+  	{id: 6, region: 'US', identifier: 'PVP'}
+];
+var currentServer = serverList.find(item => item.region == currentRegion && item.identifier == currentIdentifier);
+console.warn('On ' + JSON.stringify(currentServer));
+var serverID = (++currentServer.id) % 7;
+console.warn('To ' + JSON.stringify(serverList[serverID]));
+
+var timeout = 35000;
+if(currentServer.identifier == 'PVP'){
+   timeout = 4000;
+}
+
+setTimeout(function(){
+	change_server(serverList[serverID].region, serverList[serverID].identifier);
+}, timeout)
